@@ -40,13 +40,22 @@ int main(int argc, char **argv)
 }
 EOM
     close($fh);
-    
+
+    if ( $^O eq 'MSWin32' ) {
+
+    $postamble .= sprintf <<'EOM', ($func) x 3;
+%s:
+	@$(CCCMD) $(CCCDLFLAGS) "-I$(PERL_INC)" $(PASTHRU_DEFINE) $(DEFINE) $*.c >> zmqcheck.out
+
+EOM
+    } else {
     $postamble .= sprintf <<'EOM', ($func) x 3;
 %s:
 
 	@$(CC) -c $(PASTHRU_INC) $(INC) $(CCFLAGS) $(OPTIMIZE) $(CCCDLFLAGS) "-I$(PERL_INC)" $(PASTHRU_DEFINE) $(DEFINE) $(EXTRALIBS) -std=c99 -pedantic-errors %s.c -o %s.o >> zmqcheck.out 2>&1
 
 EOM
+}
 }
 
 sub MY::postamble { $postamble }

@@ -7,7 +7,13 @@
 #include "xshelper.h"
 #include <zmq.h>
 #include <errno.h>
+
+#ifdef _MSC_VER
+typedef int pid_t;
+#include <stdint.h>
+#else
 #include <unistd.h>
+#endif
 
 #ifndef PERLZMQ_TRACE
 #define PERLZMQ_TRACE 0

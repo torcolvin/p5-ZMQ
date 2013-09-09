@@ -61,7 +61,7 @@ EOM
     my @libs = grep { -d $_ } map { s/^-L//; $_ } split /\s+/, $ENV{ZMQ_LIBS};
     local $ENV{LD_LIBRARY_PATH} = join(":", $ENV{LD_LIBRARY_PATH}, @libs);
     assertlibs
-        lib => 'zmq',
+        lib => $^O eq 'MSWin32' ? 'libzmq' : 'zmq',
         header => 'zmq.h',
         incpath => [ split /\s+/, $ENV{ZMQ_INCLUDES} ],
         libpath => \@libs,
@@ -119,12 +119,18 @@ my $zmqcheck_dir = "tools/zmqcheck";
     my $found = 0;
     foreach my $file (glob("*.c")) {
         my $name = $file;
+        my $ok = 0;
         $name =~ s/\.c$//;
         push @clean, "$zmqcheck_dir/$name";
+        if  ( $^O eq 'MSWin32' ) {
+            $ok = (system("nmake", '/nologo', $name) == 0);
+        } else {
+            $ok = (system("make", $name) == 0);
+        }
+        print STDERR " @{[$ok ? 'YES' : 'NO']}\n";
+
         print STDERR "CHECK: Does your zmq have $name...";
 
-        my $ok = (system("make", $name) == 0);
-        print STDERR " @{[$ok ? 'YES' : 'NO']}\n";
         my $constname = sprintf "HAS_%s", uc $name;
         if ($ok) {
             $found++;
@@ -160,7 +166,12 @@ EOM
     }
 
     print STDERR "Cleaning up $zmqcheck_dir...\n";
-    system "make", "clean";
+    if  ( $^O eq 'MSWin32' ) {
+       system("nmake", '/nologo', "clean");
+    } else {
+       system("make", "clean");
+    }
+
 }
 
 { # Create constants-xs.inc
